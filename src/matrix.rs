@@ -4,11 +4,15 @@ use std::{
     ops::{Add, AddAssign, Mul},
 };
 
+use crate::{dot_product, Vector};
+
 pub struct Matrix<T> {
     data: Vec<T>,
     row: usize,
     col: usize,
 }
+
+
 
 pub fn multiply<T>(a: &Matrix<T>, b: &Matrix<T>) -> Result<Matrix<T>> 
 where 
@@ -19,9 +23,14 @@ T:  Add<Output = T> +Default + AddAssign+Mul<Output = T> + Clone + Copy {
     let mut data = vec![T::default(); a.row * b.col];
     for i in 0..a.row {
         for j in 0..b.col {
-            for k in 0..a.col {
-               data[i*b.col + j] += a.data[i*a.col + k] * b.data[k * b.col +j];
-            }
+            let row = Vector::new(&a.data[i * a.col..(i + 1) * a.col]);
+            let col_data = b.data[j..].
+            iter().
+            step_by(b.col).
+            copied().
+            collect::<Vec<T>>();
+            let col = Vector::new(col_data);
+            data[i * b.col + j] += dot_product(row, col)?;
         }
     }
     Ok(Matrix {
